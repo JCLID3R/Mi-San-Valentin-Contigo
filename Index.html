@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Juego Memoria · Compartir</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        body {
+            background: linear-gradient(145deg, #1e4a5f, #1b3a4a);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+        .game-container {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(4px);
+            border-radius: 30px;
+            padding: 20px 15px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.2);
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 {
+            text-align: center;
+            color: #ffdbb5;
+            text-shadow: 0 3px 0 #6b4a3a;
+            font-size: 1.8rem;
+            margin-top: 0;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            background: #2e4a5c;
+            padding: 12px 20px;
+            margin: 15px 0;
+            border-radius: 50px;
+            color: #ffefcf;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .card {
+            aspect-ratio: 1;
+            background: linear-gradient(145deg, #c08a5c, #9d6b4a);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 8px 0 #5e3e31, 0 5px 15px black;
+            transition: 0.1s;
+            padding: 8px;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        .card:active {
+            transform: scale(0.95);
+            box-shadow: 0 4px 0 #5e3e31;
+        }
+        .card.flipped, .card.matched {
+            background: white;
+            border: 3px solid #ffc107;
+            box-shadow: 0 4px 0 #7b6252;
+            transform: scale(0.97);
+        }
+        .card.matched {
+            background: #e6ffe6;
+            border: 3px solid #4caf50;
+            box-shadow: 0 4px 0 #2e7d32;
+            pointer-events: none;
+        }
+        .card img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 10px;
+        }
+        .card .back-icon {
+            font-size: 3rem;
+            color: #ffd966;
+            text-shadow: 2px 2px 0 #7a4d3a;
+        }
+        .btn-reset {
+            display: block;
+            margin: 0 auto;
+            background: #ffb347;
+            border: none;
+            border-bottom: 6px solid #c16b1a;
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding: 12px 30px;
+            border-radius: 50px;
+            color: #1e2f3a;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            cursor: pointer;
+            width: 100%;
+            max-width: 300px;
+        }
+        .btn-reset:active {
+            border-bottom-width: 2px;
+            transform: translateY(4px);
+        }
+        .message {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 1.2rem;
+            color: #ffefb2;
+            min-height: 2rem;
+        }
+        @media (max-width: 400px) {
+            .grid { gap: 8px; }
+            .card .back-icon { font-size: 2.2rem; }
+            h1 { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>🎮 MEMORIA</h1>
+        <div class="stats">
+            <span>🔍 <span id="attemptCount">0</span></span>
+            <span>✅ <span id="matchCount">0</span>/8</span>
+        </div>
+        
+        <div class="grid" id="memoryGrid"></div>
+        
+        <button class="btn-reset" id="resetGame">🔄 NUEVO</button>
+        <div id="winMessage" class="message"></div>
+    </div>
+
+    <script>
+        (function(){
+            // === 📸 IMÁGENES DIRECTAS (YA FUNCIONAN EN CELULAR) ===
+            const IMAGES = [
+                "https://i.postimg.cc/2y7WY0Dz/animal-1.png",
+                "https://i.postimg.cc/SKw8F0QZ/animal-2.png",
+                "https://i.postimg.cc/1z2qg2mD/animal-3.png",
+                "https://i.postimg.cc/ZK7cH5S6/animal-4.png",
+                "https://i.postimg.cc/P5v3Y0hJ/animal-5.png",
+                "https://i.postimg.cc/MTbN0Qnv/animal-6.png",
+                "https://i.postimg.cc/J7n1jW4g/animal-7.png",
+                "https://i.postimg.cc/63c0Q3bL/animal-8.png"
+            ];
+
+            const PAIRS = 8;
+            let cards = [], flipped = [], lock = false;
+            let attempts = 0, matches = 0, timer = null;
+            
+            const grid = document.getElementById('memoryGrid');
+            const attemptSpan = document.getElementById('attemptCount');
+            const matchSpan = document.getElementById('matchCount');
+            const winMsg = document.getElementById('winMessage');
+            const resetBtn = document.getElementById('resetGame');
+
+            function init() {
+                if (timer) clearTimeout(timer);
+                
+                let deck = [];
+                IMAGES.slice(0, PAIRS).forEach((url, i) => {
+                    deck.push({ url, matched: false, flip: false });
+                    deck.push({ url, matched: false, flip: false });
+                });
+                
+                // Barajar
+                for (let i = deck.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [deck[i], deck[j]] = [deck[j], deck[i]];
+                }
+                
+                cards = deck;
+                attempts = 0; matches = 0; flipped = []; lock = false;
+                updateUI();
+                winMsg.textContent = '';
+                render();
+            }
+
+            function render() {
+                let html = '';
+                cards.forEach((card, i) => {
+                    let classes = 'card';
+                    let content = '';
+                    
+                    if (card.matched) {
+                        classes += ' matched';
+                        content = `<img src="${card.url}" alt="ok">`;
+                    } else if (card.flip) {
+                        classes += ' flipped';
+                        content = `<img src="${card.url}" alt="img">`;
+                    } else {
+                        content = `<span class="back-icon">❓</span>`;
+                    }
+                    html += `<div class="${classes}" data-index="${i}">${content}</div>`;
+                });
+                grid.innerHTML = html;
+            }
+
+            function updateUI() {
+                attemptSpan.textContent = attempts;
+                matchSpan.textContent = matches;
+            }
+
+            function match() {
+                const [a, b] = flipped;
+                cards[a].matched = true;
+                cards[b].matched = true;
+                cards[a].flip = false;
+                cards[b].flip = false;
+                matches++;
+                updateUI();
+                flipped = [];
+                if (matches === PAIRS) winMsg.textContent = '🎉 GANASTE 🎉';
+                render();
+                lock = false;
+            }
+
+            function noMatch() {
+                lock = true;
+                timer = setTimeout(() => {
+                    const [a, b] = flipped;
+                    if (!cards[a].matched && !cards[b].matched) {
+                        cards[a].flip = false;
+                        cards[b].flip = false;
+                    }
+                    flipped = [];
+                    render();
+                    lock = false;
+                    timer = null;
+                }, 600);
+            }
+
+            function clickCard(e) {
+                const el = e.target.closest('.card');
+                if (!el) return;
+                
+                const i = parseInt(el.dataset.index);
+                const card = cards[i];
+                
+                if (lock || card.matched || card.flip || flipped.length >= 2) return;
+                
+                card.flip = true;
+                flipped.push(i);
+                render();
+                
+                if (flipped.length === 2) {
+                    attempts++;
+                    updateUI();
+                    const [x, y] = flipped;
+                    cards[x].url === cards[y].url ? match() : noMatch();
+                }
+            }
+
+            grid.addEventListener('click', clickCard);
+            resetBtn.addEventListener('click', init);
+            init();
+        })();
+    </script>
+</body>
+</html>
