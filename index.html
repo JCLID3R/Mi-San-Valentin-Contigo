@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Juego Memoria · Carta Mágica</title>
+    <title>Juego Memoria · Carta con Scroll</title>
+    
+    <!-- Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1"></script>
+    
     <style>
         * {
             margin: 0;
@@ -23,7 +27,7 @@
             overflow-x: hidden;
         }
 
-        /* 🌟 CORAZONES ORBITANDO */
+        /* 🌟 CORAZONES ORBITANDO - SOLO ESTOS, EL RESTO ESTÁ LIMPIO */
         .hearts-container {
             position: fixed;
             top: 0;
@@ -48,10 +52,10 @@
             left: 50%;
             top: 50%;
             transform: translate(-50%, -50%);
-            opacity: 0.9;
+            opacity: 0.8;
             animation: heartbeat 1.8s ease-in-out infinite;
             color: #ff6b8b;
-            text-shadow: 0 0 20px rgba(255, 75, 110, 0.8);
+            text-shadow: 0 0 20px rgba(255, 75, 110, 0.7);
         }
 
         .heart1 { transform: translate(-50%, -50%) rotate(0deg) translateX(200px) rotate(0deg); }
@@ -70,7 +74,7 @@
 
         @keyframes heartbeat {
             0% { transform: translate(-50%, -50%) scale(1); }
-            50% { transform: translate(-50%, -50%) scale(1.2); }
+            50% { transform: translate(-50%, -50%) scale(1.15); }
             100% { transform: translate(-50%, -50%) scale(1); }
         }
 
@@ -202,7 +206,7 @@
             100% { transform: scale(1); }
         }
 
-        /* 💌 MODAL DE LA CARTA - TAMAÑO AUTOMÁTICO */
+        /* 💌 MODAL CARTA CON SCROLL */
         .modal-carta {
             display: none;
             position: fixed;
@@ -210,7 +214,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.85);
             backdrop-filter: blur(5px);
             z-index: 100;
             justify-content: center;
@@ -218,58 +222,94 @@
             padding: 20px;
         }
 
-        .carta {
+        .carta-container {
             background: #fff9e6;
             max-width: 600px;
-            width: auto;
-            min-width: 280px;
-            max-width: 90vw;
-            border-radius: 30px 30px 30px 30px;
-            padding: 35px 30px;
+            width: 90%;
+            max-height: 80vh; /* Límite de altura */
+            border-radius: 30px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 0 3px #ffd966, 0 0 0 8px #ffb347;
             position: relative;
-            transform: scale(0);
-            animation: abrirCarta 0.4s forwards;
-            word-wrap: break-word;
+            animation: abrirCarta 0.4s ease;
             border: 2px solid white;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Importante para el scroll interno */
         }
 
         @keyframes abrirCarta {
-            0% { transform: scale(0); opacity: 0; }
+            0% { transform: scale(0.8); opacity: 0; }
             100% { transform: scale(1); opacity: 1; }
         }
 
-        .carta h2 {
-            color: #b33f5e;
-            margin-bottom: 20px;
-            font-size: 2rem;
+        /* 📬 HEADER - SIN CORAZÓN QUE TAPE */
+        .carta-header {
+            background: linear-gradient(145deg, #ff9eb5, #ff6b8b);
+            padding: 25px 20px 20px;
             text-align: center;
-            text-shadow: 2px 2px 0 #ffe0b0;
-            letter-spacing: 4px;
+            border-bottom: 3px solid #ffd966;
+            position: relative;
+            flex-shrink: 0; /* No se comprime */
         }
 
-        /* 💬 MENSAJE DENTRO DE LA CARTA - CRECE AUTOMÁTICAMENTE */
+        .carta-header h2 {
+            color: white;
+            font-size: 2rem;
+            text-shadow: 3px 3px 0 #b33f5e;
+            margin: 0;
+            letter-spacing: 4px;
+            font-weight: bold;
+        }
+
+        .carta-header p {
+            color: #fff9e6;
+            font-size: 1rem;
+            margin-top: 8px;
+            font-style: italic;
+            text-shadow: 1px 1px 0 #b33f5e;
+        }
+
+        /* 💬 CUERPO DE LA CARTA - CON SCROLL */
+        .carta-body {
+            background: #fff5e6;
+            padding: 25px;
+            overflow-y: auto; /* ¡SCROLL! */
+            flex-grow: 1; /* Ocupa el espacio restante */
+            max-height: 50vh; /* Altura máxima con scroll */
+            scrollbar-width: thin;
+            scrollbar-color: #ff6b8b #ffe0b0;
+        }
+
+        /* Scroll personalizado para Chrome/Safari */
+        .carta-body::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .carta-body::-webkit-scrollbar-track {
+            background: #ffe0b0;
+            border-radius: 10px;
+        }
+
+        .carta-body::-webkit-scrollbar-thumb {
+            background: #ff6b8b;
+            border-radius: 10px;
+            border: 2px solid #ffd966;
+        }
+
         .mensaje-carta {
-            background: #fff0d4;
-            padding: 25px 25px;
+            background: #fff9f0;
+            padding: 30px 25px;
             border-radius: 25px;
-            border: 3px dashed #ff8a9c;
-            font-size: 1.4rem;
-            line-height: 1.6;
+            border: 4px dashed #ff8a9c;
+            font-size: 1.3rem;
+            line-height: 1.7;
             color: #4a2e2e;
             font-family: 'Comic Sans MS', 'Courier New', cursive;
             text-align: center;
-            margin-bottom: 25px;
-            box-shadow: inset 0 0 15px rgba(255, 140, 160, 0.3);
+            box-shadow: inset 0 0 25px rgba(255, 140, 160, 0.2);
             white-space: pre-wrap;
             word-break: break-word;
-            min-height: 120px;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            border: 3px solid #ffb7c5;
+            margin-bottom: 20px;
         }
 
         .btn-cerrar {
@@ -277,35 +317,21 @@
             color: white;
             border: none;
             border-bottom: 6px solid #b33f5e;
-            font-size: 1.4rem;
-            padding: 12px 25px;
+            font-size: 1.3rem;
+            padding: 14px 20px;
             border-radius: 60px;
             font-weight: bold;
             cursor: pointer;
             width: 100%;
             transition: 0.1s;
-            letter-spacing: 3px;
+            letter-spacing: 4px;
             text-transform: uppercase;
-            margin-top: 5px;
+            flex-shrink: 0;
         }
 
         .btn-cerrar:active {
             border-bottom-width: 2px;
             transform: translateY(4px);
-        }
-
-        .carta-corazon {
-            position: absolute;
-            top: -18px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 2.8rem;
-            background: white;
-            padding: 5px 25px;
-            border-radius: 60px;
-            box-shadow: 0 6px 0 #b33f5e;
-            border: 2px solid #ffb7c5;
-            color: #ff3b5c;
         }
 
         .message {
@@ -317,19 +343,47 @@
             font-weight: bold;
         }
 
+        /* 🎵 BOTÓN DE MÚSICA */
+        .btn-musica {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(5px);
+            border: 2px solid white;
+            color: white;
+            font-size: 1.8rem;
+            padding: 10px;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 200;
+            box-shadow: 0 5px 15px black;
+            border: 2px solid #ffd966;
+        }
+
+        .btn-musica.mute {
+            opacity: 0.5;
+            background: rgba(0,0,0,0.5);
+        }
+
         @media (max-width: 400px) {
             .grid { gap: 8px; }
             .card .back-icon { font-size: 2.2rem; }
             h1 { font-size: 1.5rem; }
             .heart1 { transform: translateX(120px); }
             .heart2 { transform: rotate(45deg) translateX(120px) rotate(-45deg); }
-            .carta { padding: 25px 20px; }
-            .mensaje-carta { font-size: 1.2rem; padding: 15px; }
+            .carta-header h2 { font-size: 1.6rem; }
+            .mensaje-carta { font-size: 1.1rem; padding: 20px; }
         }
     </style>
 </head>
 <body>
-    <!-- ❤️ CORAZONES ORBITANDO (OCULTOS POR DEFECTO) -->
+    <!-- 🌟 SOLO LOS CORAZONES ORBITANDO (se activan al ganar) -->
     <div class="hearts-container" id="heartsContainer" style="display: none;">
         <div class="heart-orbit">
             <div class="heart heart1">❤️</div>
@@ -343,19 +397,25 @@
         </div>
     </div>
     
-    <!-- 💌 MODAL DE LA CARTA CON MENSAJE FIJO QUE CRECE -->
+    <!-- 💌 MODAL CARTA - SIN CORAZÓN QUE TAPE, CON SCROLL -->
     <div class="modal-carta" id="modalCarta">
-        <div class="carta" id="cartaDinamica">
-            <div class="carta-corazon">💌</div>
-            <h2>✨ PARA TI ✨</h2>
-            <!-- EL MENSAJE SE INSERTARÁ AQUÍ DINÁMICAMENTE -->
-            <div class="mensaje-carta" id="mensajeCarta">
-                🎉 ¡FELICIDADES! 🎉<br><br>
-                Has encontrado todos los pares.<br>
-                💝 Eres increíble 💝<br><br>
-                Sigue brillando ✨
+        <div class="carta-container">
+            <!-- HEADER SIMPLE Y LIMPIO -->
+            <div class="carta-header">
+                <h2>✨ PARA TI ✨</h2>
+                <p>💌 Desliza para leer todo 💌</p>
             </div>
-            <button class="btn-cerrar" id="cerrarCarta">💖 CERRAR 💖</button>
+            
+            <!-- BODY CON SCROLL AUTOMÁTICO -->
+            <div class="carta-body" id="cartaBody">
+                <div class="mensaje-carta" id="mensajeCarta">
+                    🎉 ¡FELICIDADES! 🎉<br><br>
+                    Has encontrado todos los pares.<br>
+                    💖 Eres increíble 💖<br><br>
+                    Sigue brillando ✨
+                </div>
+                <button class="btn-cerrar" id="cerrarCarta">💖 CERRAR 💖</button>
+            </div>
         </div>
     </div>
     
@@ -369,14 +429,25 @@
         
         <div class="grid" id="memoryGrid"></div>
         
-        <!-- BOTÓN MÁGICO (CAMBIA SEGÚN ESTADO) -->
         <button class="btn-magico" id="btnAccion">🔄 NUEVO</button>
         <div id="winMessage" class="message"></div>
     </div>
+    
+    <!-- 🎵 BOTÓN PARA MÚSICA -->
+    <div class="btn-musica" id="btnMusica">🔊</div>
+
+    <!-- 🎵 AUDIOS (Base64) -->
+    <audio id="musicaFondo" loop>
+        <source src="data:audio/mpeg;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTG9uZ2VuZEdsb2JhbC5jb20AAABEY29tbWVudABUaGlzIHdvcmxkIGlzIGJlYXV0aWZ1bC4gVGhpcyBzb3VuZCBpcyBmcmVlIHRvIHVzZS4AAAAAAAA=" type="audio/mpeg">
+    </audio>
+    
+    <audio id="musicaCarta" loop>
+        <source src="data:audio/mpeg;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTG9uZ2VuZEdsb2JhbC5jb20AAABEY29tbWVudABUaGlzIHdvcmxkIGlzIGJlYXV0aWZ1bC4gVGhpcyBzb3VuZCBpcyBmcmVlIHRvIHVzZS4AAAAAAAA=" type="audio/mpeg">
+    </audio>
 
     <script>
         (function(){
-            // === 📸 TUS FOTOS (CÁMBIALAS POR LAS TUYAS) ===
+            // === 📸 TUS FOTOS ===
             const IMAGES = [
                 "Alasi.jpeg",
                 "Biblio.jpeg",
@@ -392,7 +463,10 @@
             let cards = [], flipped = [], lock = false;
             let attempts = 0, matches = 0, timer = null;
             let juegoCompletado = false;
+            let musicaActiva = true;
+            let musicaCartaActiva = false;
             
+            // Elementos DOM
             const grid = document.getElementById('memoryGrid');
             const attemptSpan = document.getElementById('attemptCount');
             const matchSpan = document.getElementById('matchCount');
@@ -402,24 +476,73 @@
             const cerrarCarta = document.getElementById('cerrarCarta');
             const mensajeCarta = document.getElementById('mensajeCarta');
             const heartsContainer = document.getElementById('heartsContainer');
+            const btnMusica = document.getElementById('btnMusica');
+            const musicaFondo = document.getElementById('musicaFondo');
+            const musicaCarta = document.getElementById('musicaCarta');
 
-            // === 💌 MENSAJE PERSONALIZADO (CÁMBIALO AQUÍ) ===
-            const MENSAJE_SECRETO = `🎉 FELICIDADES CAMPEÓN/A 🎉
+            // === 💌 MENSAJE PERSONALIZADO - ¡PON AQUÍ TU TEXTO! ===
+            const MENSAJE_SECRETO = `🎉 ¡FELICIDADES! 🎉
 
-Has demostrado ser una persona con gran memoria, inteligencia y perseverancia.
+Has logrado completar el juego de memoria.
 
-Este juego fue creado especialmente para ti.
+Eres una persona increíble, con una mente brillante y un corazón enorme.
 
-Que este pequeño logro sea un recordatorio de que TODO lo que te propongas, lo puedes lograr.
+💖 Gracias por jugar, por tu tiempo y por tu sonrisa 💖
 
-Sigue adelante, el mundo necesita más personas como tú.
+Que este pequeño logro sea un recordatorio de que todo lo que te propones, lo puedes lograr.
 
-💝 Con mucho cariño 💝
+Sigue adelante, sigue brillando, sigue siendo tú.
 
-Atentamente,
-Tu amigo que hizo este juego ✨
+Con mucho cariño,
+Tu juego de memoria ✨
 
-PD: ¡Comparte este link con alguien especial!`;
+PD: Este mensaje es especial, solo para ti.`;
+
+            // === 🎵 MÚSICA ===
+            function iniciarMusicaFondo() {
+                if (musicaActiva) {
+                    musicaFondo.volume = 0.3;
+                    musicaFondo.play().catch(e => {});
+                }
+            }
+
+            function detenerMusicaFondo() {
+                musicaFondo.pause();
+                musicaFondo.currentTime = 0;
+            }
+
+            function iniciarMusicaCarta() {
+                if (musicaActiva) {
+                    musicaCarta.volume = 0.4;
+                    musicaCarta.play().catch(e => {});
+                    musicaCartaActiva = true;
+                }
+            }
+
+            function detenerMusicaCarta() {
+                musicaCarta.pause();
+                musicaCarta.currentTime = 0;
+                musicaCartaActiva = false;
+            }
+
+            // === 🎊 CONFETI ===
+            function lanzarConfeti() {
+                confetti({
+                    particleCount: 150,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#ff6b8b', '#ffb347', '#4caf50', '#ffd966']
+                });
+                
+                setTimeout(() => {
+                    confetti({
+                        particleCount: 100,
+                        spread: 50,
+                        origin: { y: 0.5, x: 0.2 },
+                        colors: ['#ff8a9c', '#ffc107']
+                    });
+                }, 200);
+            }
 
             // === 🎮 INICIAR JUEGO ===
             function init() {
@@ -431,7 +554,6 @@ PD: ¡Comparte este link con alguien especial!`;
                     deck.push({ url, matched: false, flip: false });
                 });
                 
-                // Barajar
                 for (let i = deck.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
                     [deck[i], deck[j]] = [deck[j], deck[i]];
@@ -444,22 +566,20 @@ PD: ¡Comparte este link con alguien especial!`;
                 lock = false;
                 juegoCompletado = false;
                 
-                // Restaurar botón original
                 btnAccion.textContent = '🔄 NUEVO';
                 btnAccion.classList.remove('carta');
-                
-                // Ocultar corazones
                 heartsContainer.style.display = 'none';
+                
+                if (musicaCartaActiva) detenerMusicaCarta();
+                iniciarMusicaFondo();
                 
                 updateUI();
                 winMsg.textContent = '';
                 render();
-                
-                // Resetear mensaje de carta al original
                 mensajeCarta.innerHTML = MENSAJE_SECRETO.replace(/\n/g, '<br>');
+                modalCarta.style.display = 'none';
             }
 
-            // === 🖼️ RENDERIZAR TABLERO ===
             function render() {
                 let html = '';
                 cards.forEach((card, i) => {
@@ -480,13 +600,11 @@ PD: ¡Comparte este link con alguien especial!`;
                 grid.innerHTML = html;
             }
 
-            // === 📊 ACTUALIZAR ESTADÍSTICAS ===
             function updateUI() {
                 attemptSpan.textContent = attempts;
                 matchSpan.textContent = matches;
             }
 
-            // === ✅ CUANDO ENCUENTRA UN PAR ===
             function match() {
                 const [a, b] = flipped;
                 cards[a].matched = true;
@@ -499,21 +617,16 @@ PD: ¡Comparte este link con alguien especial!`;
                 render();
                 lock = false;
                 
-                // 🎉 CUANDO COMPLETA EL JUEGO 🎉
                 if (matches === PAIRS) {
                     juegoCompletado = true;
                     winMsg.textContent = '🎉 ¡VICTORIA! 🎉';
-                    
-                    // ❤️ ACTIVAR CORAZONES ORBITANDO
                     heartsContainer.style.display = 'block';
-                    
-                    // 💌 CAMBIAR BOTÓN A "ABRIR CARTA"
                     btnAccion.textContent = '💌 ABRIR CARTA 💌';
                     btnAccion.classList.add('carta');
+                    lanzarConfeti();
                 }
             }
 
-            // === ❌ CUANDO NO SON IGUALES ===
             function noMatch() {
                 lock = true;
                 timer = setTimeout(() => {
@@ -529,7 +642,6 @@ PD: ¡Comparte este link con alguien especial!`;
                 }, 600);
             }
 
-            // === 🖱️ CLIC EN CARTA ===
             function clickCard(e) {
                 const el = e.target.closest('.card');
                 if (!el) return;
@@ -551,35 +663,62 @@ PD: ¡Comparte este link con alguien especial!`;
                 }
             }
 
-            // === 🎯 MANEJAR BOTÓN MÁGICO ===
             function handleBoton() {
                 if (juegoCompletado) {
-                    // 💌 ABRIR CARTA CON MENSAJE PERSONALIZADO
                     modalCarta.style.display = 'flex';
+                    lanzarConfeti();
+                    detenerMusicaFondo();
+                    iniciarMusicaCarta();
                 } else {
-                    // 🔄 REINICIAR JUEGO
                     init();
                 }
             }
 
-            // === 💌 CERRAR CARTA ===
             function cerrarCartaHandler() {
                 modalCarta.style.display = 'none';
+                detenerMusicaCarta();
+                iniciarMusicaFondo();
             }
 
-            // === 🎧 EVENT LISTENERS ===
+            function toggleMusica() {
+                musicaActiva = !musicaActiva;
+                if (musicaActiva) {
+                    btnMusica.textContent = '🔊';
+                    btnMusica.classList.remove('mute');
+                    if (juegoCompletado && modalCarta.style.display === 'flex') {
+                        iniciarMusicaCarta();
+                    } else {
+                        iniciarMusicaFondo();
+                    }
+                } else {
+                    btnMusica.textContent = '🔇';
+                    btnMusica.classList.add('mute');
+                    detenerMusicaFondo();
+                    detenerMusicaCarta();
+                }
+            }
+
+            // === EVENT LISTENERS ===
             grid.addEventListener('click', clickCard);
             btnAccion.addEventListener('click', handleBoton);
             cerrarCarta.addEventListener('click', cerrarCartaHandler);
+            btnMusica.addEventListener('click', toggleMusica);
             
-            // Cerrar modal si hacen clic fuera de la carta
             modalCarta.addEventListener('click', function(e) {
                 if (e.target === modalCarta) {
                     cerrarCartaHandler();
                 }
             });
 
-            // Iniciar juego
+            // Primer tope para audio en móviles
+            document.addEventListener('click', function iniciarPrimerToque() {
+                if (musicaActiva) {
+                    musicaFondo.volume = 0.3;
+                    musicaFondo.play().catch(e => {});
+                }
+                document.removeEventListener('click', iniciarPrimerToque);
+            }, { once: true });
+
             init();
         })();
     </script>
